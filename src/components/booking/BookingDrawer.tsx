@@ -45,6 +45,7 @@ export const BookingDrawer: React.FC = () => {
     setMapClickMode,
     uiTheme,
     setUITheme,
+    mobileTab,
   } = useTripStore();
 
   const [searchTarget, setSearchTarget] = useState<'pickup' | 'destination' | 'stop' | null>(null);
@@ -101,7 +102,11 @@ export const BookingDrawer: React.FC = () => {
   // -------------------------------------------------------------
   if (uiTheme === 'uber') {
     return (
-      <aside className="w-[360px] max-w-[90vw] h-screen bg-[#111215] border-r border-[#1E2028] z-20 flex flex-col justify-between p-6 select-none shadow-2xl relative">
+      <aside
+        className={`w-full md:w-[360px] max-w-full md:max-w-[90vw] h-screen bg-[#111215] border-r border-[#1E2028] z-20 flex flex-col justify-between p-6 select-none shadow-2xl relative ${
+          mobileTab === 'map' ? 'hidden md:flex' : 'flex'
+        }`}
+      >
         {/* Top Header: Uber Brand & Theme Switcher */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
@@ -220,7 +225,11 @@ export const BookingDrawer: React.FC = () => {
   // RENDER: UMOTO DARK THEME (From Image 1 & Left of Image 3)
   // -------------------------------------------------------------
   return (
-    <aside className="w-[390px] lg:w-[420px] max-w-[90vw] h-screen bg-[#13161F] border-r border-[#1F2432] z-20 flex flex-col justify-between p-6 lg:p-7 select-none shadow-2xl relative overflow-hidden">
+    <aside
+      className={`w-full md:w-[390px] lg:w-[420px] max-w-full md:max-w-[90vw] h-screen bg-[#13161F] border-r border-[#1F2432] z-20 flex flex-col justify-between p-6 lg:p-7 select-none shadow-2xl relative overflow-hidden ${
+        mobileTab === 'map' ? 'hidden md:flex' : 'flex'
+      }`}
+    >
       {/* Top Header: Brand & View Toggle */}
       <div className="flex flex-col gap-5">
         <div className="flex items-center justify-between">

@@ -37,6 +37,10 @@ interface TripStore {
   uiTheme: UIThemeMode;
   setUITheme: (theme: UIThemeMode) => void;
 
+  // Mobile Viewport Switcher
+  mobileTab: 'booking' | 'map';
+  setMobileTab: (tab: 'booking' | 'map') => void;
+
   // Vehicles & Pricing
   selectedVehicle: VehicleOption;
   selectVehicle: (vehicleId: string) => void;
@@ -95,6 +99,8 @@ export const useTripStore = create<TripStore>((set, get) => ({
   intermediateStop: null,
   mapClickMode: 'none',
   uiTheme: 'umoto',
+  mobileTab: 'booking',
+  setMobileTab: (tab) => set({ mobileTab: tab }),
   selectedVehicle: VEHICLE_OPTIONS[0], // Passat
   status: 'IDLE',
   tripId: null,

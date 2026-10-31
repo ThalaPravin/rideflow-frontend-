@@ -13,6 +13,7 @@ import { RouteSummaryCard } from '@/components/booking/RouteSummaryCard';
 import { DriverSimulatorModal } from '@/components/driver/DriverSimulatorModal';
 import { DriverChatModal } from '@/components/chat/DriverChatModal';
 import { SafetyToolkitModal } from '@/components/safety/SafetyToolkitModal';
+import { SavedPlacesModal } from '@/components/booking/SavedPlacesModal';
 import { Bookmark } from 'lucide-react';
 import { useTripStore } from '@/store/useTripStore';
 
@@ -35,8 +36,9 @@ export default function Home() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSafetyOpen, setIsSafetyOpen] = useState(false);
+  const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
 
-  const { uiTheme } = useTripStore();
+  const { uiTheme, mobileTab, setMobileTab } = useTripStore();
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-[#0B0D13] flex">
@@ -63,7 +65,11 @@ export default function Home() {
           <BookingDrawer />
 
           {/* 2. Fullscreen Right Map Canvas */}
-          <div className="flex-1 h-screen relative overflow-hidden">
+          <div
+            className={`flex-1 h-screen relative overflow-hidden ${
+              mobileTab === 'booking' ? 'hidden md:block' : 'block'
+            }`}
+          >
             {/* Top Floating Control Bar */}
             <Header
               isHUDOpen={isHUDOpen}
@@ -78,8 +84,9 @@ export default function Home() {
             </div>
 
             {/* Saved Places Bookmark Badge (From Image 3 top-right) */}
-            <div className="absolute top-24 right-20 z-20 pointer-events-auto hidden lg:block">
+            <div className="absolute top-24 right-20 z-20 pointer-events-auto hidden sm:block">
               <button
+                onClick={() => setIsSavedPlacesOpen(true)}
                 className="w-11 h-11 rounded-2xl bg-[#13161F]/90 backdrop-blur-md border border-[#272D3D] hover:border-[#2EE59D] flex items-center justify-center text-slate-300 hover:text-white transition shadow-xl"
                 title="Saved Locations & Bookmarks"
               >
@@ -98,6 +105,28 @@ export default function Home() {
           </div>
         </>
       )}
+
+      {/* Mobile Bottom Switcher Pill */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 md:hidden flex items-center gap-1 p-1 rounded-full bg-[#13161F]/95 backdrop-blur-md border border-[#2EE59D]/40 shadow-2xl">
+        <button
+          onClick={() => setMobileTab('booking')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+            mobileTab === 'booking' ? 'bg-[#2EE59D] text-black shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>🚖</span>
+          <span>Booking</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('map')}
+          className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+            mobileTab === 'map' ? 'bg-[#2EE59D] text-black shadow-md' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <span>🗺️</span>
+          <span>Map</span>
+        </button>
+      </div>
 
       {/* 5. Trip Completed Receipt & Confetti Modal */}
       <TripReceiptModal />
@@ -126,7 +155,13 @@ export default function Home() {
         onClose={() => setIsSafetyOpen(false)}
       />
 
-      {/* 10. Architecture & Kafka DevTools HUD */}
+      {/* 10. Saved Places & Bookmarks Modal */}
+      <SavedPlacesModal
+        isOpen={isSavedPlacesOpen}
+        onClose={() => setIsSavedPlacesOpen(false)}
+      />
+
+      {/* 11. Architecture & Kafka DevTools HUD */}
       <ArchitectureHUD isOpen={isHUDOpen} onToggle={() => setIsHUDOpen((prev) => !prev)} />
     </main>
   );
