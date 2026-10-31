@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Header } from '@/components/common/Header';
 import { BookingDrawer } from '@/components/booking/BookingDrawer';
+import { GoCabsDashboard } from '@/components/booking/GoCabsDashboard';
 import { DriverCard } from '@/components/booking/DriverCard';
 import { TripReceiptModal } from '@/components/booking/TripReceiptModal';
+import { TripHistoryModal } from '@/components/booking/TripHistoryModal';
 import { ArchitectureHUD } from '@/components/hud/ArchitectureHUD';
 import { RouteSummaryCard } from '@/components/booking/RouteSummaryCard';
 import { DriverSimulatorModal } from '@/components/driver/DriverSimulatorModal';
-import { Bookmark, Sparkles } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 import { useTripStore } from '@/store/useTripStore';
 
 // Dynamically import MapView to prevent SSR window issues with MapLibre GL
@@ -28,54 +30,81 @@ const MapView = dynamic(() => import('@/components/map/MapView').then((mod) => m
 export default function Home() {
   const [isHUDOpen, setIsHUDOpen] = useState(false);
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
-  const { uiTheme, setUITheme } = useTripStore();
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  const { uiTheme } = useTripStore();
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-[#0B0D13] flex">
-      {/* 1. Left Docked Sidebar (Umoto & Uber Reference Design) */}
-      <BookingDrawer />
+      {/* CASE A: GoCabs Dashboard (Reference Image 3 bottom-right) */}
+      {uiTheme === 'gocabs' ? (
+        <div className="w-full h-full relative">
+          {/* GoCabs Top Navbar & Left Floating Card */}
+          <GoCabsDashboard />
 
-      {/* 2. Fullscreen Right Map Canvas */}
-      <div className="flex-1 h-screen relative overflow-hidden">
-        {/* Top Floating Control Bar */}
-        <Header
-          isHUDOpen={isHUDOpen}
-          onToggleHUD={() => setIsHUDOpen((prev) => !prev)}
-          onToggleDriverModal={() => setIsDriverModalOpen(true)}
-        />
+          {/* Fullscreen Map under GoCabs */}
+          <div className="absolute inset-0 z-0">
+            <MapView />
+          </div>
 
-        {/* Vector Map */}
-        <div className="absolute inset-0 z-0">
-          <MapView />
+          <DriverCard />
         </div>
+      ) : (
+        /* CASE B: Umoto Dark (Image 1) & Uber Dark (Image 2) */
+        <>
+          {/* 1. Left Docked Sidebar */}
+          <BookingDrawer />
 
-        {/* Saved Places Bookmark Badge (From Image 3 top-right) */}
-        <div className="absolute top-24 right-20 z-20 pointer-events-auto hidden lg:block">
-          <button
-            className="w-11 h-11 rounded-2xl bg-[#13161F]/90 backdrop-blur-md border border-[#272D3D] hover:border-[#2EE59D] flex items-center justify-center text-slate-300 hover:text-white transition shadow-xl"
-            title="Saved Locations & Bookmarks"
-          >
-            <Bookmark className="w-4 h-4 text-[#2EE59D]" />
-          </button>
-        </div>
+          {/* 2. Fullscreen Right Map Canvas */}
+          <div className="flex-1 h-screen relative overflow-hidden">
+            {/* Top Floating Control Bar */}
+            <Header
+              isHUDOpen={isHUDOpen}
+              onToggleHUD={() => setIsHUDOpen((prev) => !prev)}
+              onToggleDriverModal={() => setIsDriverModalOpen(true)}
+              onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+            />
 
-        {/* 3. Driver Tooltip Card floating on Map (Jeromy Conway • VW Passat • 10 min) */}
-        <DriverCard />
+            {/* Vector Map */}
+            <div className="absolute inset-0 z-0">
+              <MapView />
+            </div>
 
-        {/* 4. Bottom Floating Route Summary Card (Route - 8,4 Kilometers / 2,5 Kilometers) */}
-        <RouteSummaryCard />
-      </div>
+            {/* Saved Places Bookmark Badge (From Image 3 top-right) */}
+            <div className="absolute top-24 right-20 z-20 pointer-events-auto hidden lg:block">
+              <button
+                className="w-11 h-11 rounded-2xl bg-[#13161F]/90 backdrop-blur-md border border-[#272D3D] hover:border-[#2EE59D] flex items-center justify-center text-slate-300 hover:text-white transition shadow-xl"
+                title="Saved Locations & Bookmarks"
+              >
+                <Bookmark className="w-4 h-4 text-[#2EE59D]" />
+              </button>
+            </div>
+
+            {/* 3. Driver Tooltip Card floating on Map (Jeromy Conway • VW Passat • 10 min) */}
+            <DriverCard />
+
+            {/* 4. Bottom Floating Route Summary Card */}
+            <RouteSummaryCard />
+          </div>
+        </>
+      )}
 
       {/* 5. Trip Completed Receipt & Confetti Modal */}
       <TripReceiptModal />
 
-      {/* 6. Driver Telemetry & Redis Geo Simulator Modal */}
+      {/* 6. Past Trips History & Invoices Modal */}
+      <TripHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => setIsHistoryModalOpen(false)}
+      />
+
+      {/* 7. Driver Telemetry & Redis Geo Simulator Modal */}
       <DriverSimulatorModal
         isOpen={isDriverModalOpen}
         onClose={() => setIsDriverModalOpen(false)}
       />
 
-      {/* 7. Architecture & Kafka DevTools HUD */}
+      {/* 8. Architecture & Kafka DevTools HUD */}
       <ArchitectureHUD isOpen={isHUDOpen} onToggle={() => setIsHUDOpen((prev) => !prev)} />
     </main>
   );

@@ -49,6 +49,30 @@ export const VEHICLE_OPTIONS: VehicleOption[] = [
     etaMinutes: 7,
     tag: 'Best Value',
   },
+  {
+    id: 'camry_white',
+    name: 'White Camry',
+    brand: 'Toyota',
+    category: 'comfort',
+    basePrice: 4.5,
+    perKm: 1.9,
+    capacity: 4,
+    image: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=600&q=80',
+    etaMinutes: 5,
+    tag: 'GoCabs Choice',
+  },
+  {
+    id: 'mustang_gt',
+    name: 'Mustang Shelby GT',
+    brand: 'Ford',
+    category: 'luxury',
+    basePrice: 9.0,
+    perKm: 3.5,
+    capacity: 2,
+    image: 'https://images.unsplash.com/photo-1584345604476-8ec5e12e42dd?auto=format&fit=crop&w=600&q=80',
+    etaMinutes: 4,
+    tag: 'Sports Edition',
+  },
 ];
 
 export const MOCK_DRIVERS: DriverProfile[] = [

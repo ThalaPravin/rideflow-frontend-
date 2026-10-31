@@ -63,12 +63,12 @@ The UI takes inspiration from modern ride-hailing interfaces (**Umoto**, **Uber 
   - **Go Microservices Topology**: Health and ports for User (`:50051`), Driver (`:50052`), Trip (`:50053`), Matching (`:50054`), Payment (`:50055`), and API Gateway (`:8080`).
   - **Redis Geospatial Cache**: Visualizes `GEOSEARCH` radius queries and driver coordinate indexing.
 
-### 6. Interactive Map Pinning & Waypoint Stops
-* **Click-to-Pin on Map**: Toggle "Set custom point on Map" or click anywhere on the vector canvas to dynamically place pickup, destination, or waypoint pins.
-* **Intermediate Waypoint Stops**: Click "Add intermediate stop" to insert multiple stops along the journey with automated route re-routing and fare adjustment.
-* **Ambient Fleet Rendering**: Live nearby available cars visualized across the map representing active drivers in Redis `GEOADD` cache.
-* **Audio FX Control**: Toggle synthesized Web Audio UI chimes in the top bar.
-* **Live Microservices Healthcheck**: Automatic healthcheck pinging to Go microservices Gateway (`:8080`) with latency badge and fallback simulator.
+### 7. Multi-Design Architecture (Umoto • Uber • GoCabs)
+The platform includes 3 distinct switchable frontend layouts accessible with a single click from the top navigation bar:
+* **Umoto Dark Theme** (Image 1): Docked left sidebar, vibrant mint Passat card, dual-gradient road polyline, and floating driver card (`JC • 10 min`).
+* **Uber Dark Theme** (Image 2): Classic Uber sidebar with `Route Details`, class selector (`Business $15`, `Standart $22`, `Premium $30`), and floating white `Route - 2,5 Kilometers` summary card.
+* **GoCabs Dashboard** (Image 3): Full web portal navbar (`GOCABS`), `Ride` / `Courier` tab switcher, and vehicle fleet cards (`White Camry`, `Mustang Shelby GT`, `Honda CR-V`).
+* **Trip History & Audited Receipts**: Top bar `Trips` drawer showing Kafka-audited trip IDs, timestamps, and payment statuses.
 
 ---
 
@@ -87,11 +87,11 @@ cd rideflow-frontend-
 # Install dependencies
 npm install
 
-# Start the development server (configured on port 3001 to avoid conflicts)
+# Start the development server (configured on standard port 3000)
 npm run dev
 ```
 
-Open **[http://localhost:3001](http://localhost:3001)** in your browser to experience the application.
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to experience the application.
 
 ---
 

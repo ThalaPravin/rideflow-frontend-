@@ -3,15 +3,21 @@
 import React, { useEffect } from 'react';
 import { PRESET_ROUTES } from '@/data/mockData';
 import { useTripStore } from '@/store/useTripStore';
-import { Activity, MapPin, Terminal, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Activity, MapPin, Terminal, Volume2, VolumeX, Receipt } from 'lucide-react';
 
 interface HeaderProps {
   onToggleHUD: () => void;
   isHUDOpen: boolean;
   onToggleDriverModal: () => void;
+  onOpenHistoryModal: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggleDriverModal }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onToggleHUD,
+  isHUDOpen,
+  onToggleDriverModal,
+  onOpenHistoryModal,
+}) => {
   const {
     activeRoute,
     selectPresetRoute,
@@ -37,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
     <header className="absolute top-5 left-6 right-6 z-20 flex items-center justify-between pointer-events-none">
       {/* Theme View Switcher & City Selector */}
       <div className="flex items-center gap-3 pointer-events-auto">
-        {/* Design View Switcher: Umoto / Uber */}
+        {/* Design View Switcher: Umoto / Uber / GoCabs (All 3 reference designs from Image 3) */}
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#13161F]/90 backdrop-blur-xl border border-[#242A38] shadow-2xl">
           <button
             onClick={() => setUITheme('umoto')}
@@ -47,7 +53,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Umoto Design
+            Umoto
           </button>
           <button
             onClick={() => setUITheme('uber')}
@@ -57,7 +63,17 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            Uber Design
+            Uber
+          </button>
+          <button
+            onClick={() => setUITheme('gocabs')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              uiTheme === 'gocabs'
+                ? 'bg-[#F59E0B] text-black shadow-[0_0_15px_rgba(245,158,11,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            GoCabs
           </button>
         </div>
 
@@ -82,6 +98,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
 
       {/* Backend Status, Audio, & DevTools Trigger */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
+        {/* Trips History Modal Trigger */}
+        <button
+          onClick={onOpenHistoryModal}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs font-medium text-slate-300 hover:text-white hover:border-slate-500 transition"
+          title="View past completed trips & Kafka verified receipts"
+        >
+          <Receipt className="w-3.5 h-3.5 text-[#2EE59D]" />
+          <span className="hidden md:inline">Trips</span>
+        </button>
+
         {/* Go Backend Badge */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs font-mono">
           <span className="relative flex h-2 w-2">
