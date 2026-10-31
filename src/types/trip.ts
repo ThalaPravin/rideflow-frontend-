@@ -66,3 +66,5 @@ export interface PresetCityRoute {
 }
 
 export type MapClickTarget = 'none' | 'pickup' | 'destination' | 'stop';
+
+export type UIThemeMode = 'umoto' | 'uber' | 'gocabs';

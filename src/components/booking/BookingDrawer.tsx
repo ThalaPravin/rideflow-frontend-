@@ -5,9 +5,10 @@ import { useTripStore } from '@/store/useTripStore';
 import { VEHICLE_OPTIONS, POPULAR_PLACES } from '@/data/mockData';
 import { LocationPoint } from '@/types/trip';
 import {
-  ArrowUpDown,
-  Circle,
+  ArrowLeftRight,
+  Crosshair,
   MapPin,
+  Home,
   Plus,
   Loader2,
   Navigation,
@@ -19,6 +20,7 @@ import {
   X,
   Gauge,
   Sparkles,
+  Settings,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -41,10 +43,13 @@ export const BookingDrawer: React.FC = () => {
     activeRoute,
     speedKmH,
     setMapClickMode,
+    uiTheme,
+    setUITheme,
   } = useTripStore();
 
   const [searchTarget, setSearchTarget] = useState<'pickup' | 'destination' | 'stop' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClassTier, setSelectedClassTier] = useState<'business' | 'standart' | 'premium'>('standart');
 
   const fare = calculateFare();
 
@@ -77,7 +82,6 @@ export const BookingDrawer: React.FC = () => {
     setSearchQuery('');
   };
 
-  // Handle Map Pinning
   const handlePinOnMap = () => {
     if (searchTarget) {
       setMapClickMode(searchTarget);
@@ -85,7 +89,6 @@ export const BookingDrawer: React.FC = () => {
     }
   };
 
-  // Filtered popular places for active city
   const cityPlaces = POPULAR_PLACES[activeRoute.id] || POPULAR_PLACES['silicon_valley'];
   const filteredPlaces = cityPlaces.filter(
     (p) =>
@@ -93,288 +96,417 @@ export const BookingDrawer: React.FC = () => {
       p.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <div className="absolute top-20 left-6 bottom-6 z-10 w-[390px] max-w-[calc(100vw-3rem)] pointer-events-none flex flex-col justify-between">
-      <motion.div
-        initial={{ opacity: 0, x: -30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel p-6 rounded-3xl pointer-events-auto flex flex-col gap-5 max-h-full overflow-y-auto"
-      >
-        {/* Header Title & Swap Button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold tracking-tight text-white">Trip Details</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {activeRoute.distanceKm} km • ~{activeRoute.durationMin} mins journey
-            </p>
-          </div>
-          <button
-            onClick={handleSwap}
-            disabled={status !== 'IDLE'}
-            className="w-8 h-8 rounded-full bg-obsidian-800 hover:bg-obsidian-700 border border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white transition disabled:opacity-50"
-            title="Swap pickup and destination"
-          >
-            <ArrowUpDown className="w-4 h-4 text-slate-300" />
-          </button>
-        </div>
-
-        {/* Route Details (FROM, OPTIONAL STOP, & TO) */}
-        <div className="flex flex-col gap-2.5 relative">
-          {/* FROM Input */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between pl-8 pr-1">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                FROM
-              </span>
-              <span className="text-[10px] text-neon-emerald font-mono">Pickup</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (status === 'IDLE') setSearchTarget('pickup');
-              }}
-              disabled={status !== 'IDLE'}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-obsidian-800/80 hover:bg-obsidian-750 border border-slate-700/60 focus:border-neon-emerald/60 text-left transition w-full"
-            >
-              <Circle className="w-3.5 h-3.5 text-neon-emerald flex-shrink-0 fill-neon-emerald/30" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{pickup.name || 'Set Pickup'}</p>
-                <p className="text-[11px] text-slate-400 truncate">{pickup.address}</p>
+  // -------------------------------------------------------------
+  // RENDER: UBER THEME (From Image 2 & 3)
+  // -------------------------------------------------------------
+  if (uiTheme === 'uber') {
+    return (
+      <aside className="w-[360px] max-w-[90vw] h-screen bg-[#111215] border-r border-[#1E2028] z-20 flex flex-col justify-between p-6 select-none shadow-2xl relative">
+        {/* Top Header: Uber Brand & Theme Switcher */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#00E599] flex items-center justify-center font-bold text-black text-xs">
+                U
               </div>
-              <MapPin className="w-4 h-4 text-neon-emerald flex-shrink-0" />
-            </button>
+              <span className="text-xl font-bold text-white tracking-tight">Uber</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setUITheme('umoto')}
+                className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 hover:text-white"
+                title="Switch to Umoto design"
+              >
+                Umoto View
+              </button>
+              <button className="text-slate-400 hover:text-white">
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Intermediate Stop (If Added) */}
-          {intermediateStop && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between pl-8 pr-1">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-purple-400 font-semibold">
-                  WAYPOINT STOP
-                </span>
+          <h2 className="text-lg font-bold text-white tracking-tight">Route Details</h2>
+
+          {/* Route Inputs (Uber Style with Home & Pin icons) */}
+          <div className="flex flex-col gap-2.5 relative">
+            {/* Dotted indicator line */}
+            <div className="absolute left-[-14px] top-4 bottom-4 flex flex-col items-center justify-between pointer-events-none">
+              <span className="w-2 h-2 rounded-full bg-[#00E599]" />
+              <span className="w-[1px] h-7 border-l border-dashed border-[#00E599]/60" />
+              <span className="w-2 h-2 bg-[#00E599]" />
+            </div>
+
+            {/* FROM */}
+            <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[#18191E] border border-[#242730] text-xs">
+              <input
+                type="text"
+                readOnly
+                value={pickup.address}
+                className="bg-transparent text-white font-medium outline-none w-full truncate"
+              />
+              <Home className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
+            </div>
+
+            {/* TO with + stop on right */}
+            <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-[#18191E] border border-[#242730] text-xs">
+              <input
+                type="text"
+                readOnly
+                value={destination.address}
+                className="bg-transparent text-white font-medium outline-none w-full truncate"
+              />
+              <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                <MapPin className="w-4 h-4 text-slate-400" />
                 <button
-                  onClick={removeIntermediateStop}
-                  className="text-[10px] text-rose-400 hover:text-rose-300 font-mono flex items-center gap-0.5"
+                  onClick={() => setSearchTarget('stop')}
+                  className="w-4 h-4 text-[#00E599] hover:scale-110 transition"
+                  title="Add stop"
                 >
-                  <X className="w-3 h-3" /> Remove
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-purple-950/30 border border-purple-500/40 text-left transition w-full">
-                <div className="w-3.5 h-3.5 rounded-full bg-purple-500/30 border border-purple-400 flex items-center justify-center flex-shrink-0">
-                  <span className="text-[8px] font-bold text-purple-200">S</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-purple-100 truncate">{intermediateStop.name}</p>
-                  <p className="text-[11px] text-purple-300/70 truncate">{intermediateStop.address}</p>
-                </div>
-              </div>
             </div>
-          )}
-
-          {/* TO Input */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between pl-8 pr-1">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                TO
-              </span>
-              <span className="text-[10px] text-neon-cyan font-mono">Dropoff</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (status === 'IDLE') setSearchTarget('destination');
-              }}
-              disabled={status !== 'IDLE'}
-              className="flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-obsidian-800/80 hover:bg-obsidian-750 border border-slate-700/60 focus:border-neon-emerald/60 text-left transition w-full"
-            >
-              <MapPin className="w-3.5 h-3.5 text-neon-cyan flex-shrink-0 fill-neon-cyan/20" />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">{destination.name || 'Set Destination'}</p>
-                <p className="text-[11px] text-slate-400 truncate">{destination.address}</p>
-              </div>
-              <Navigation className="w-4 h-4 text-neon-cyan flex-shrink-0" />
-            </button>
           </div>
 
-          {/* Add Stop Button (If no intermediate stop yet) */}
-          {!intermediateStop && status === 'IDLE' && (
-            <button
-              onClick={() => setSearchTarget('stop')}
-              className="flex items-center justify-center gap-2 py-2 rounded-2xl border border-dashed border-slate-700/60 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-500 transition"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add intermediate stop</span>
-            </button>
-          )}
+          {/* Choose Class (Business, Standart, Premium) */}
+          <div className="flex flex-col gap-3 mt-4">
+            <h3 className="text-base font-bold text-white tracking-tight">Choose Class</h3>
+            <div className="flex flex-col gap-2">
+              {[
+                { id: 'business', label: 'Business', price: '$15' },
+                { id: 'standart', label: 'Standart', price: '$22' },
+                { id: 'premium', label: 'Premium', price: '$30' },
+              ].map((tier) => {
+                const isSelected = selectedClassTier === tier.id;
+                return (
+                  <button
+                    key={tier.id}
+                    onClick={() => setSelectedClassTier(tier.id as any)}
+                    className={`flex items-center justify-between px-5 py-3.5 rounded-2xl transition-all ${
+                      isSelected
+                        ? 'bg-[#22252C] border border-slate-700 text-white font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-[#18191E]'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{tier.label}</span>
+                    <span className="text-sm font-mono">{tier.price}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Vehicle Selection Section */}
+        {/* Bottom CTA Button */}
+        <div className="flex flex-col items-center gap-2 pt-4">
+          <button
+            onClick={requestRide}
+            className="w-full py-4 rounded-2xl bg-[#00E599] hover:bg-[#2EE59D] text-black font-extrabold text-sm transition shadow-[0_0_25px_rgba(0,229,153,0.35)]"
+          >
+            Confirm Order
+          </button>
+          <button
+            onClick={cancelRide}
+            className="text-xs text-slate-500 hover:text-slate-300 font-medium py-1"
+          >
+            Cancel
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // RENDER: UMOTO DARK THEME (From Image 1 & Left of Image 3)
+  // -------------------------------------------------------------
+  return (
+    <aside className="w-[390px] lg:w-[420px] max-w-[90vw] h-screen bg-[#13161F] border-r border-[#1F2432] z-20 flex flex-col justify-between p-6 lg:p-7 select-none shadow-2xl relative overflow-hidden">
+      {/* Top Header: Brand & View Toggle */}
+      <div className="flex flex-col gap-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-2xl font-black tracking-tight text-[#2EE59D] lowercase font-sans flex items-center">
+              umoto
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2EE59D] ml-0.5 mt-2" />
+            </h1>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setUITheme('uber')}
+              className="text-[11px] font-mono px-2.5 py-1 rounded-full bg-[#1B1F2A] border border-[#272D3D] text-slate-400 hover:text-white hover:border-[#2EE59D] transition"
+              title="Switch to Uber layout"
+            >
+              Uber View
+            </button>
+            <button
+              onClick={handleSwap}
+              disabled={status !== 'IDLE'}
+              className="text-slate-400 hover:text-white transition p-1"
+              title="Swap pickup and destination"
+            >
+              <ArrowLeftRight className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Section: Trip Details */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold tracking-tight text-white">Select Car</h3>
-            <span className="text-xs font-mono text-slate-400">4 available</span>
+            <h2 className="text-xl font-bold tracking-tight text-white">Trip Details</h2>
+            <span className="text-xs font-mono text-slate-400">
+              {activeRoute.distanceKm} km • ~{activeRoute.durationMin}m
+            </span>
           </div>
 
-          {/* Horizontal Vehicle Cards Grid */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {VEHICLE_OPTIONS.map((car) => {
+          {/* Dotted Journey Inputs */}
+          <div className="flex flex-col gap-2 relative">
+            {/* Left Dotted Line with 3 Circles */}
+            <div className="absolute left-[8px] top-[34px] bottom-[30px] flex flex-col items-center justify-between pointer-events-none">
+              <span className="w-2.5 h-2.5 rounded-full border border-[#2EE59D] bg-[#13161F]" />
+              <span className="w-[1px] h-10 border-l border-dotted border-slate-600" />
+              <span className="w-2.5 h-2.5 rounded-full border border-slate-500 bg-[#13161F]" />
+              <span className="w-[1px] h-7 border-l border-dotted border-slate-600" />
+              <span className="w-2.5 h-2.5 rounded-full border border-slate-600 bg-[#13161F]" />
+            </div>
+
+            {/* FROM */}
+            <div className="flex flex-col gap-1 pl-6">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold">
+                FROM
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (status === 'IDLE') setSearchTarget('pickup');
+                }}
+                disabled={status !== 'IDLE'}
+                className="flex items-center justify-between px-3.5 py-3 rounded-2xl bg-[#1B1F2A] hover:bg-[#202533] border border-[#272D3D] text-left transition w-full"
+              >
+                <span className="text-xs font-medium text-white truncate max-w-[240px]">
+                  {pickup.address}
+                </span>
+                <Crosshair className="w-4 h-4 text-[#2EE59D] flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* TO */}
+            <div className="flex flex-col gap-1 pl-6">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold">
+                TO
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (status === 'IDLE') setSearchTarget('destination');
+                }}
+                disabled={status !== 'IDLE'}
+                className="flex items-center justify-between px-3.5 py-3 rounded-2xl bg-[#1B1F2A] hover:bg-[#202533] border border-[#272D3D] text-left transition w-full"
+              >
+                <span className="text-xs font-medium text-white truncate max-w-[240px]">
+                  {destination.address}
+                </span>
+                <Crosshair className="w-4 h-4 text-[#2EE59D] flex-shrink-0" />
+              </button>
+            </div>
+
+            {/* Intermediate Stop or + Pill */}
+            <div className="pl-6 pt-1">
+              {intermediateStop ? (
+                <div className="flex items-center justify-between px-3.5 py-2.5 rounded-2xl bg-[#201830] border border-purple-500/40 text-xs text-purple-200">
+                  <span className="truncate max-w-[220px]">{intermediateStop.name}</span>
+                  <button
+                    onClick={removeIntermediateStop}
+                    className="text-rose-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setSearchTarget('stop')}
+                  disabled={status !== 'IDLE'}
+                  className="w-full h-11 rounded-2xl border border-dashed border-[#272D3D] bg-[#161922] hover:border-[#2EE59D] hover:bg-[#1B1F2A] flex items-center justify-center text-slate-400 hover:text-white transition"
+                  title="Add stop"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Select Car (Image 1 Style with Mint Selected Card) */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold tracking-tight text-white">Select Car</h3>
+            <span className="text-xs font-mono text-slate-400">10 Cars</span>
+          </div>
+
+          {/* Horizontal Vehicle Cards */}
+          <div className="grid grid-cols-2 gap-3">
+            {VEHICLE_OPTIONS.slice(0, 2).map((car) => {
               const isSelected = selectedVehicle.id === car.id;
-              const stopFee = intermediateStop ? 2.5 : 0;
-              const carFare = (car.basePrice + activeRoute.distanceKm * car.perKm + stopFee).toFixed(2);
+              const carFare = (car.basePrice + activeRoute.distanceKm * car.perKm).toFixed(2);
 
               return (
                 <button
                   key={car.id}
                   onClick={() => selectVehicle(car.id)}
                   disabled={status !== 'IDLE'}
-                  className={`text-left p-3 rounded-2xl transition-all relative flex flex-col justify-between h-[125px] overflow-hidden ${
-                    isSelected ? 'glass-card-active' : 'glass-card'
+                  className={`text-left p-4 rounded-2xl transition-all relative flex flex-col justify-between h-[155px] overflow-hidden ${
+                    isSelected
+                      ? 'bg-[#2EE59D] text-black shadow-[0_8px_30px_rgba(46,229,157,0.35)]'
+                      : 'bg-[#1B1F2A] border border-[#272D3D] text-white hover:border-slate-600'
                   }`}
                 >
-                  {/* Top info */}
+                  {/* Top Text Info */}
                   <div className="z-10">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-sm text-white tracking-tight">{car.name}</h4>
-                      <span className="text-[11px] font-mono font-bold text-neon-emerald">${carFare}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400">{car.brand}</p>
+                    <h4
+                      className={`font-extrabold text-base tracking-tight ${
+                        isSelected ? 'text-black' : 'text-white'
+                      }`}
+                    >
+                      {car.name}
+                    </h4>
+                    <p
+                      className={`text-xs mt-0.5 ${
+                        isSelected ? 'text-black/80 font-medium' : 'text-slate-400'
+                      }`}
+                    >
+                      {car.brand}
+                    </p>
                   </div>
 
-                  {/* Car Image render */}
-                  <div className="absolute right-[-10px] bottom-[-5px] w-28 h-16 pointer-events-none opacity-85">
+                  {/* Front-Facing Car Cutout Image */}
+                  <div className="absolute right-[-15px] bottom-[-5px] w-36 h-24 pointer-events-none">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={car.image}
                       alt={car.name}
-                      className="w-full h-full object-cover rounded-lg filter drop-shadow-lg"
+                      className="w-full h-full object-cover filter drop-shadow-xl"
                     />
                   </div>
 
-                  {/* Bottom badges */}
-                  <div className="z-10 flex items-center gap-2 text-[10px] font-mono text-slate-400">
-                    <span className="flex items-center gap-0.5">
-                      <Clock className="w-3 h-3 text-neon-cyan" /> {car.etaMinutes}m
-                    </span>
-                    <span className="flex items-center gap-0.5">
-                      <Users className="w-3 h-3 text-slate-400" /> {car.capacity}
-                    </span>
+                  {/* Bottom Stats */}
+                  <div
+                    className={`z-10 flex items-center gap-2 text-[10px] font-mono ${
+                      isSelected ? 'text-black/90 font-bold' : 'text-slate-400'
+                    }`}
+                  >
+                    <span>${carFare}</span>
+                    <span>• {car.etaMinutes}m</span>
                   </div>
                 </button>
               );
             })}
           </div>
+
+          {/* Scroll Track Indicator (Matching Image 1) */}
+          <div className="w-full h-1 bg-[#232836] rounded-full mt-1 flex items-center">
+            <div className="w-12 h-1 bg-[#2EE59D] rounded-full" />
+          </div>
         </div>
+      </div>
 
-        {/* Trip Status & Live Speed Telemetry (When Active) */}
-        <AnimatePresence>
-          {status !== 'IDLE' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-obsidian-850/90 border border-slate-700"
-            >
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-mono text-neon-emerald flex items-center gap-1.5 font-semibold">
-                  {status === 'SEARCHING' && (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Querying Redis Geo...
-                    </>
-                  )}
-                  {status === 'ASSIGNED' && (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-neon-emerald" /> Driver Dispatched
-                    </>
-                  )}
-                  {status === 'ON_TRIP' && (
-                    <>
-                      <Navigation className="w-3.5 h-3.5 animate-pulse text-neon-cyan" /> In Transit
-                    </>
-                  )}
-                </span>
-                <span className="font-mono text-slate-400 font-semibold">{tripProgress}%</span>
+      {/* Trip Status / Progress Bar (When Active) */}
+      <AnimatePresence>
+        {status !== 'IDLE' && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex flex-col gap-2 p-3.5 rounded-2xl bg-[#1B1F2A] border border-slate-700 my-2"
+          >
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-mono text-[#2EE59D] flex items-center gap-1.5 font-semibold">
+                {status === 'SEARCHING' && (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Matching Driver...
+                  </>
+                )}
+                {status === 'ASSIGNED' && (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#2EE59D]" /> Jeromy Conway Dispatched
+                  </>
+                )}
+                {status === 'ON_TRIP' && (
+                  <>
+                    <Navigation className="w-3.5 h-3.5 animate-pulse text-cyan-400" /> Heading to Destination
+                  </>
+                )}
+              </span>
+              <span className="font-mono text-slate-400 font-semibold">{tripProgress}%</span>
+            </div>
+
+            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-[#2EE59D] h-1.5 rounded-full transition-all duration-700"
+                style={{ width: `${tripProgress}%` }}
+              />
+            </div>
+
+            {status === 'ON_TRIP' && (
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px] font-mono text-slate-400">
+                <span className="text-[#2EE59D] font-bold">{speedKmH || 42} km/h</span>
+                <span>ETA {Math.max(1, Math.round(activeRoute.durationMin * (1 - tripProgress / 100)))}m remaining</span>
               </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-              {/* Progress bar */}
-              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className="bg-neon-emerald h-1.5 rounded-full transition-all duration-700"
-                  style={{ width: `${tripProgress}%` }}
-                />
-              </div>
+      {/* Bottom CTA Button: Confirm Order • $22.45 */}
+      <div className="pt-4 relative">
+        {status === 'IDLE' ? (
+          <button
+            onClick={requestRide}
+            className="w-full h-14 rounded-full bg-[#2EE59D] hover:bg-[#34F5A8] text-black font-extrabold text-base flex items-center justify-between px-7 shadow-[0_0_35px_rgba(46,229,157,0.45)] transition hover:scale-[1.01] active:scale-[0.99]"
+          >
+            <span>Confirm Order</span>
+            <span className="font-mono text-lg font-black">${fare.toFixed(2)}</span>
+          </button>
+        ) : (
+          <button
+            onClick={cancelRide}
+            className="w-full py-3.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-semibold text-xs transition flex items-center justify-center gap-1.5"
+          >
+            <XCircle className="w-4 h-4" />
+            <span>Cancel Ride</span>
+          </button>
+        )}
+      </div>
 
-              {/* Live Telemetry Speedometer during ON_TRIP */}
-              {status === 'ON_TRIP' && (
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[11px] font-mono text-slate-400">
-                  <div className="flex items-center gap-1 text-neon-cyan font-semibold">
-                    <Gauge className="w-3.5 h-3.5" />
-                    <span>{speedKmH} km/h</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-slate-400">
-                    <span>ETA ~{Math.max(1, Math.round(activeRoute.durationMin * (1 - tripProgress / 100)))}m remaining</span>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Decorative Green Accent Shape (Matching bottom-left of Image 1 & 3) */}
+      <div className="absolute -bottom-8 -left-8 w-28 h-14 bg-[#2EE59D] transform -rotate-12 rounded-3xl opacity-80 pointer-events-none -z-0" />
 
-        {/* CTA Button Actions */}
-        <div>
-          {status === 'IDLE' ? (
-            <button
-              onClick={requestRide}
-              className="btn-neon w-full py-3.5 px-6 rounded-2xl text-base flex items-center justify-between"
-            >
-              <span>Confirm Order</span>
-              <span className="font-mono text-lg font-extrabold">${fare}</span>
-            </button>
-          ) : (
-            <button
-              onClick={cancelRide}
-              className="w-full py-3 px-4 rounded-2xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 transition flex items-center justify-center gap-1.5"
-            >
-              <XCircle className="w-4 h-4" />
-              <span>Cancel Ride Request</span>
-            </button>
-          )}
-        </div>
-      </motion.div>
-
-      {/* Location Picker / Search Modal */}
+      {/* Search Modal */}
       <AnimatePresence>
         {searchTarget && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute inset-0 z-30 glass-panel-elevated p-5 rounded-3xl flex flex-col gap-4 pointer-events-auto"
+            className="absolute inset-0 z-30 bg-[#13161F] p-6 flex flex-col gap-4 select-auto"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-white text-base">
-                  {searchTarget === 'pickup' && 'Select Pickup Location'}
-                  {searchTarget === 'destination' && 'Select Destination'}
-                  {searchTarget === 'stop' && 'Add Intermediate Stop'}
-                </h3>
-                <p className="text-xs text-slate-400">Choose a landmark or pin on map</p>
-              </div>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+              <h3 className="font-bold text-white text-sm">
+                {searchTarget === 'pickup' && 'Set Pickup Address'}
+                {searchTarget === 'destination' && 'Set Destination'}
+                {searchTarget === 'stop' && 'Add Intermediate Stop'}
+              </h3>
               <button
                 onClick={() => setSearchTarget(null)}
-                className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white"
+                className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Search Input Box */}
-            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl bg-obsidian-850 border border-slate-700">
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[#1B1F2A] border border-[#272D3D]">
               <Search className="w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search addresses, landmarks, airports..."
+                placeholder="Search addresses or landmarks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
@@ -382,32 +514,25 @@ export const BookingDrawer: React.FC = () => {
               />
             </div>
 
-            {/* Action 1: Pin Directly on Map */}
             <button
               onClick={handlePinOnMap}
-              className="flex items-center gap-3 p-3 rounded-2xl bg-neon-emerald/10 hover:bg-neon-emerald/20 border border-neon-emerald/30 text-left transition"
+              className="flex items-center gap-2.5 p-3 rounded-xl bg-[#2EE59D]/10 hover:bg-[#2EE59D]/20 border border-[#2EE59D]/30 text-left transition"
             >
-              <div className="w-8 h-8 rounded-xl bg-neon-emerald/20 flex items-center justify-center text-neon-emerald">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-bold text-neon-emerald">Set custom point on Map</p>
-                <p className="text-[11px] text-slate-400">Click anywhere on vector canvas to place pin</p>
+              <MapPin className="w-4 h-4 text-[#2EE59D]" />
+              <div>
+                <p className="text-xs font-bold text-[#2EE59D]">Click point on Map</p>
+                <p className="text-[10px] text-slate-400">Click anywhere on vector canvas</p>
               </div>
             </button>
 
-            {/* Popular Landmarks List */}
-            <div className="flex-1 overflow-y-auto flex flex-col gap-1.5 pr-1">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-semibold mb-1">
-                Popular Locations in {activeRoute.city.split(' ')[0]}
-              </span>
+            <div className="flex-1 overflow-y-auto flex flex-col gap-1 pr-1">
               {filteredPlaces.map((place, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSelectPlace(place)}
-                  className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-800/60 border border-transparent hover:border-slate-700/60 text-left transition"
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#1B1F2A] text-left transition"
                 >
-                  <Sparkles className="w-4 h-4 text-neon-cyan flex-shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#2EE59D] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{place.name}</p>
                     <p className="text-[10px] text-slate-400 truncate">{place.address}</p>
@@ -418,6 +543,6 @@ export const BookingDrawer: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </aside>
   );
 };

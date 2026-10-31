@@ -33,6 +33,10 @@ interface TripStore {
   selectPresetRoute: (routeId: string) => void;
   handleMapClickLocation: (lon: number, lat: number) => void;
 
+  // UI Theme Mode (Umoto / Uber Dark / GoCabs from reference designs)
+  uiTheme: UIThemeMode;
+  setUITheme: (theme: UIThemeMode) => void;
+
   // Vehicles & Pricing
   selectedVehicle: VehicleOption;
   selectVehicle: (vehicleId: string) => void;
@@ -77,6 +81,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
   destination: DEFAULT_ROUTE.destination,
   intermediateStop: null,
   mapClickMode: 'none',
+  uiTheme: 'umoto',
   selectedVehicle: VEHICLE_OPTIONS[0], // Passat
   status: 'IDLE',
   tripId: null,
@@ -84,13 +89,48 @@ export const useTripStore = create<TripStore>((set, get) => ({
   carPosition: DEFAULT_ROUTE.routeCoordinates[2],
   carHeading: 135,
   tripProgress: 0,
-  driverEta: 4,
+  driverEta: 10,
   speedKmH: 0,
   isAudioMuted: false,
   kafkaLogs: [],
   isBackendConnected: false,
   backendLatencyMs: 0,
   isSimulatorMode: true,
+
+  setUITheme: (theme) => {
+    sounds.playClick();
+    if (theme === 'umoto') {
+      const r = PRESET_ROUTES[0];
+      set({
+        uiTheme: 'umoto',
+        activeRoute: r,
+        pickup: r.pickup,
+        destination: r.destination,
+        intermediateStop: null,
+        selectedVehicle: VEHICLE_OPTIONS[0],
+        activeDriver: MOCK_DRIVERS[0],
+        carPosition: r.routeCoordinates[2] || r.routeCoordinates[0],
+        driverEta: 10,
+        status: 'IDLE',
+      });
+    } else if (theme === 'uber') {
+      const r = PRESET_ROUTES[1];
+      set({
+        uiTheme: 'uber',
+        activeRoute: r,
+        pickup: r.pickup,
+        destination: r.destination,
+        intermediateStop: null,
+        selectedVehicle: VEHICLE_OPTIONS[0],
+        activeDriver: MOCK_DRIVERS[1],
+        carPosition: r.routeCoordinates[1] || r.routeCoordinates[0],
+        driverEta: 5,
+        status: 'IDLE',
+      });
+    } else {
+      set({ uiTheme: theme });
+    }
+  },
 
   setMapClickMode: (mode) => set({ mapClickMode: mode }),
 

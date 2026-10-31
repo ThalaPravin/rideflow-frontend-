@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import { PRESET_ROUTES } from '@/data/mockData';
 import { useTripStore } from '@/store/useTripStore';
-import { Activity, MapPin, Terminal, Volume2, VolumeX } from 'lucide-react';
+import { Activity, MapPin, Terminal, Volume2, VolumeX, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   onToggleHUD: () => void;
@@ -21,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
     isBackendConnected,
     backendLatencyMs,
     checkBackendHealth,
+    uiTheme,
+    setUITheme,
   } = useTripStore();
 
   useEffect(() => {
@@ -33,32 +35,44 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
 
   return (
     <header className="absolute top-5 left-6 right-6 z-20 flex items-center justify-between pointer-events-none">
-      {/* Brand Logo & Route Preset Selector */}
+      {/* Theme View Switcher & City Selector */}
       <div className="flex items-center gap-3 pointer-events-auto">
-        <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl glass-panel shadow-glass">
-          <div className="w-8 h-8 rounded-xl bg-neon-emerald flex items-center justify-center font-extrabold text-obsidian-950 text-lg shadow-neonSmall">
-            R
-          </div>
-          <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
-            Ride<span className="text-neon-emerald">Flow</span>
-          </span>
-          <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full bg-neon-emerald/10 text-neon-emerald border border-neon-emerald/20 font-semibold ml-1">
-            Distributed
-          </span>
+        {/* Design View Switcher: Umoto / Uber */}
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-[#13161F]/90 backdrop-blur-xl border border-[#242A38] shadow-2xl">
+          <button
+            onClick={() => setUITheme('umoto')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              uiTheme === 'umoto'
+                ? 'bg-[#2EE59D] text-black shadow-[0_0_15px_rgba(46,229,157,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Umoto Design
+          </button>
+          <button
+            onClick={() => setUITheme('uber')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              uiTheme === 'uber'
+                ? 'bg-[#00E599] text-black shadow-[0_0_15px_rgba(0,229,153,0.4)]'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Uber Design
+          </button>
         </div>
 
-        {/* City Route Quick Selector */}
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl glass-panel text-xs text-slate-300">
-          <MapPin className="w-3.5 h-3.5 text-neon-emerald" />
-          <span className="text-slate-400 font-medium">City:</span>
+        {/* City Selector */}
+        <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs text-slate-300">
+          <MapPin className="w-3.5 h-3.5 text-[#2EE59D]" />
+          <span className="text-slate-500 font-medium">City:</span>
           <select
             value={activeRoute.id}
             onChange={(e) => selectPresetRoute(e.target.value)}
             disabled={status !== 'IDLE'}
-            className="bg-transparent text-white font-semibold cursor-pointer outline-none border-none py-1 pr-1"
+            className="bg-transparent text-white font-semibold cursor-pointer outline-none border-none pr-1"
           >
             {PRESET_ROUTES.map((route) => (
-              <option key={route.id} value={route.id} className="bg-obsidian-900 text-slate-200">
+              <option key={route.id} value={route.id} className="bg-[#13161F] text-slate-200">
                 {route.city}
               </option>
             ))}
@@ -68,17 +82,17 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
 
       {/* Backend Status, Audio, & DevTools Trigger */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
-        {/* Backend Connectivity Status Badge */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl glass-panel text-xs font-mono">
+        {/* Go Backend Badge */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs font-mono">
           <span className="relative flex h-2 w-2">
             <span
               className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                isBackendConnected ? 'bg-neon-emerald' : 'bg-neon-cyan'
+                isBackendConnected ? 'bg-[#2EE59D]' : 'bg-cyan-400'
               }`}
             />
             <span
               className={`relative inline-flex rounded-full h-2 w-2 ${
-                isBackendConnected ? 'bg-neon-emerald' : 'bg-neon-cyan'
+                isBackendConnected ? 'bg-[#2EE59D]' : 'bg-cyan-400'
               }`}
             />
           </span>
@@ -88,49 +102,49 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
           <span
             className={`text-[10px] px-1.5 py-0.5 rounded border ${
               isBackendConnected
-                ? 'bg-emerald-950/80 text-neon-emerald border-emerald-500/30'
-                : 'bg-slate-800 text-neon-cyan border-slate-700'
+                ? 'bg-emerald-950/80 text-[#2EE59D] border-emerald-500/30'
+                : 'bg-slate-800 text-cyan-400 border-slate-700'
             }`}
           >
-            {isBackendConnected ? `${backendLatencyMs}ms` : 'Simulator Mode'}
+            {isBackendConnected ? `${backendLatencyMs}ms` : 'Simulator Ready'}
           </span>
         </div>
 
         {/* Audio Mute/Unmute Button */}
         <button
           onClick={toggleAudioMute}
-          className="w-10 h-10 rounded-2xl glass-panel flex items-center justify-center text-slate-300 hover:text-white transition"
+          className="w-9 h-9 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] flex items-center justify-center text-slate-300 hover:text-white transition"
           title={isAudioMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
         >
           {isAudioMuted ? (
             <VolumeX className="w-4 h-4 text-slate-500" />
           ) : (
-            <Volume2 className="w-4 h-4 text-neon-emerald" />
+            <Volume2 className="w-4 h-4 text-[#2EE59D]" />
           )}
         </button>
 
         {/* Driver Console Button */}
         <button
           onClick={onToggleDriverModal}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl glass-panel text-xs font-medium text-slate-300 hover:text-white hover:border-slate-500 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs font-medium text-slate-300 hover:text-white hover:border-slate-500 transition"
           title="Open live GPS telemetry and driver shift controls"
         >
-          <Activity className="w-3.5 h-3.5 text-neon-cyan" />
-          <span className="hidden sm:inline">Driver Console</span>
+          <Activity className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="hidden md:inline">Driver Console</span>
         </button>
 
         {/* DevTools HUD Toggle Button */}
         <button
           onClick={onToggleHUD}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl glass-panel text-xs font-medium transition-all ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border text-xs font-medium transition-all ${
             isHUDOpen
-              ? 'border-neon-emerald text-neon-emerald shadow-neonSmall'
-              : 'text-slate-300 hover:text-white hover:border-slate-500'
+              ? 'border-[#2EE59D] text-[#2EE59D] shadow-[0_0_15px_rgba(46,229,157,0.3)]'
+              : 'border-[#242A38] text-slate-300 hover:text-white hover:border-slate-500'
           }`}
           title="Inspect live Kafka events, Redis Geo cache and Go backend telemetry"
         >
-          <Terminal className="w-3.5 h-3.5 text-neon-emerald" />
-          <span className="hidden sm:inline">System HUD</span>
+          <Terminal className="w-3.5 h-3.5 text-[#2EE59D]" />
+          <span className="hidden md:inline">System HUD</span>
         </button>
       </div>
     </header>
