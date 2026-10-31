@@ -67,6 +67,7 @@ interface TripStore {
 
   // Actions
   requestRide: () => void;
+  acceptRideByDriver: () => void;
   cancelRide: () => void;
   completeRide: () => void;
   resetRide: () => void;
@@ -393,6 +394,61 @@ export const useTripStore = create<TripStore>((set, get) => ({
           }
         }, 1800);
       }, 2500);
+    }, 1800);
+  },
+
+  acceptRideByDriver: () => {
+    const { status, tripId, addKafkaLog } = get();
+    if (status !== 'SEARCHING') return;
+
+    const assignedDriver = MOCK_DRIVERS[0];
+    sounds.playDriverMatched();
+    set({
+      status: 'ASSIGNED',
+      activeDriver: assignedDriver,
+      driverEta: 2,
+      speedKmH: 28,
+    });
+
+    addKafkaLog({
+      topic: 'trip.matched',
+      eventType: 'DRIVER_ACCEPTED_DISPATCH',
+      sourceService: 'driver-service',
+      payload: {
+        trip_id: tripId,
+        driver_id: assignedDriver.id,
+        driver_name: assignedDriver.name,
+        action: 'MANUALLY_ACCEPTED_BY_DRIVER',
+      },
+    });
+
+    setTimeout(() => {
+      set({ status: 'ON_TRIP' });
+      const routeCoords = get().activeRoute.routeCoordinates;
+      let step = 0;
+      const totalSteps = routeCoords.length;
+
+      const interval = setInterval(() => {
+        step++;
+        if (step < totalSteps) {
+          const currentPos = routeCoords[step];
+          const prevPos = routeCoords[step - 1];
+          const dLon = currentPos[0] - prevPos[0];
+          const dLat = currentPos[1] - prevPos[1];
+          const heading = (Math.atan2(dLon, dLat) * 180) / Math.PI;
+          const simulatedSpeed = Math.floor(38 + Math.random() * 16);
+
+          set({
+            carPosition: currentPos,
+            carHeading: heading,
+            tripProgress: Math.round((step / totalSteps) * 100),
+            speedKmH: simulatedSpeed,
+          });
+        } else {
+          clearInterval(interval);
+          get().completeRide();
+        }
+      }, 1800);
     }, 1800);
   },
 
