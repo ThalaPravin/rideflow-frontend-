@@ -3,13 +3,14 @@
 import React, { useEffect } from 'react';
 import { PRESET_ROUTES } from '@/data/mockData';
 import { useTripStore } from '@/store/useTripStore';
-import { Activity, MapPin, Terminal, Volume2, VolumeX, Receipt } from 'lucide-react';
+import { Activity, MapPin, Terminal, Volume2, VolumeX, Receipt, Wallet } from 'lucide-react';
 
 interface HeaderProps {
   onToggleHUD: () => void;
   isHUDOpen: boolean;
   onToggleDriverModal: () => void;
   onOpenHistoryModal: () => void;
+  onOpenPaymentModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
   isHUDOpen,
   onToggleDriverModal,
   onOpenHistoryModal,
+  onOpenPaymentModal,
 }) => {
   const {
     activeRoute,
@@ -29,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
     checkBackendHealth,
     uiTheme,
     setUITheme,
+    walletBalance,
   } = useTripStore();
 
   useEffect(() => {
@@ -106,6 +109,16 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Receipt className="w-3.5 h-3.5 text-[#2EE59D]" />
           <span className="hidden md:inline">Trips</span>
+        </button>
+
+        {/* Digital Wallet & Payments Trigger */}
+        <button
+          onClick={onOpenPaymentModal}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-[#13161F]/80 backdrop-blur-md border border-[#242A38] text-xs font-medium text-slate-300 hover:text-white hover:border-[#2EE59D] transition"
+          title="Digital Wallet & Payment Methods"
+        >
+          <Wallet className="w-3.5 h-3.5 text-[#2EE59D]" />
+          <span className="font-mono text-white text-[11px]">${walletBalance.toFixed(2)}</span>
         </button>
 
         {/* Go Backend Badge */}

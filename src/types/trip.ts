@@ -75,3 +75,22 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
+
+export interface PaymentMethod {
+  id: string;
+  type: 'wallet' | 'card' | 'apple_pay' | 'google_pay' | 'cash';
+  title: string;
+  subtitle: string;
+  last4?: string;
+  brand?: string;
+  iconName?: string;
+  isDefault: boolean;
+}
+
+export interface PromoDiscount {
+  code: string;
+  percentage?: number;
+  amountOff?: number;
+  description: string;
+}
+

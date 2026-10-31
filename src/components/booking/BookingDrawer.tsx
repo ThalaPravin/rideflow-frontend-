@@ -21,10 +21,16 @@ import {
   Gauge,
   Sparkles,
   Settings,
+  CreditCard,
+  Calendar,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const BookingDrawer: React.FC = () => {
+interface BookingDrawerProps {
+  onOpenPaymentModal?: () => void;
+}
+
+export const BookingDrawer: React.FC<BookingDrawerProps> = ({ onOpenPaymentModal }) => {
   const {
     pickup,
     destination,
@@ -46,6 +52,10 @@ export const BookingDrawer: React.FC = () => {
     uiTheme,
     setUITheme,
     mobileTab,
+    selectedPaymentMethod,
+    appliedPromo,
+    scheduledTime,
+    setScheduledTime,
   } = useTripStore();
 
   const [searchTarget, setSearchTarget] = useState<'pickup' | 'destination' | 'stop' | null>(null);
@@ -262,9 +272,30 @@ export const BookingDrawer: React.FC = () => {
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight text-white">Trip Details</h2>
-            <span className="text-xs font-mono text-slate-400">
-              {activeRoute.distanceKm} km • ~{activeRoute.durationMin}m
-            </span>
+            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-[#1B1F2A] border border-[#272D3D]">
+              <button
+                type="button"
+                onClick={() => setScheduledTime(null)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono transition ${
+                  !scheduledTime
+                    ? 'bg-[#2EE59D] text-black shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Now
+              </button>
+              <button
+                type="button"
+                onClick={() => setScheduledTime('Tomorrow, 08:30 AM')}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-mono transition ${
+                  scheduledTime
+                    ? 'bg-[#2EE59D] text-black shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Schedule
+              </button>
+            </div>
           </div>
 
           {/* Dotted Journey Inputs */}
@@ -464,14 +495,65 @@ export const BookingDrawer: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Payment Method & Promo Summary Pill */}
+      {status === 'IDLE' && onOpenPaymentModal && (
+        <div className="pt-2">
+          <div className="flex items-center justify-between px-3.5 py-2 rounded-2xl bg-[#1B1F2A] border border-[#272D3D] text-xs">
+            <button
+              type="button"
+              onClick={onOpenPaymentModal}
+              className="flex items-center gap-2 text-left hover:text-white transition text-slate-300 min-w-0"
+              title="Change payment method"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-[#2EE59D] flex-shrink-0" />
+              <span className="font-medium text-[11px] truncate max-w-[150px]">
+                {selectedPaymentMethod.title} {selectedPaymentMethod.last4 ? `(•••• ${selectedPaymentMethod.last4})` : ''}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {appliedPromo ? (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                  {appliedPromo.code}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onOpenPaymentModal}
+                  className="text-[10px] font-mono text-[#2EE59D] hover:underline"
+                >
+                  + Promo
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onOpenPaymentModal}
+                className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom CTA Button: Confirm Order • $22.45 */}
-      <div className="pt-4 relative">
+      <div className="pt-2 relative">
         {status === 'IDLE' ? (
           <button
             onClick={requestRide}
             className="w-full h-14 rounded-full bg-[#2EE59D] hover:bg-[#34F5A8] text-black font-extrabold text-base flex items-center justify-between px-7 shadow-[0_0_35px_rgba(46,229,157,0.45)] transition hover:scale-[1.01] active:scale-[0.99]"
           >
-            <span>Confirm Order</span>
+            <div className="flex items-center gap-2">
+              {scheduledTime ? (
+                <>
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-black truncate max-w-[200px]">Reserve ({scheduledTime})</span>
+                </>
+              ) : (
+                <span>Confirm Order</span>
+              )}
+            </div>
             <span className="font-mono text-lg font-black">${fare.toFixed(2)}</span>
           </button>
         ) : (

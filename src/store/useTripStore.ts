@@ -7,11 +7,15 @@ import {
   KafkaLogEntry,
   PresetCityRoute,
   MapClickTarget,
+  PaymentMethod,
+  PromoDiscount,
 } from '@/types/trip';
 import {
   VEHICLE_OPTIONS,
   MOCK_DRIVERS,
   PRESET_ROUTES,
+  MOCK_PAYMENT_METHODS,
+  VALID_PROMOS,
   calculateDistanceKm,
   generateRouteCoordinates,
 } from '@/data/mockData';
@@ -81,6 +85,30 @@ interface TripStore {
   checkBackendHealth: () => Promise<void>;
   addKafkaLog: (log: Omit<KafkaLogEntry, 'id' | 'timestamp'>) => void;
 
+  // Payments & Digital Wallet
+  walletBalance: number;
+  topUpWallet: (amount: number) => void;
+  paymentMethods: PaymentMethod[];
+  selectedPaymentMethod: PaymentMethod;
+  selectPaymentMethod: (id: string) => void;
+
+  // Promo Discounts
+  appliedPromo: PromoDiscount | null;
+  applyPromoCode: (code: string) => { success: boolean; message: string };
+  removePromo: () => void;
+
+  // Ride Scheduling
+  scheduledTime: string | null;
+  setScheduledTime: (time: string | null) => void;
+
+  // Post-Trip Rating, Tipping & Compliments
+  tripRating: number;
+  setTripRating: (rating: number) => void;
+  driverTip: number;
+  setDriverTip: (tip: number) => void;
+  selectedCompliments: string[];
+  toggleCompliment: (compliment: string) => void;
+
   // Actions
   requestRide: () => void;
   acceptRideByDriver: () => void;
@@ -126,6 +154,68 @@ export const useTripStore = create<TripStore>((set, get) => ({
   isBackendConnected: false,
   backendLatencyMs: 0,
   isSimulatorMode: true,
+
+  // Payments & Digital Wallet
+  walletBalance: 142.50,
+  topUpWallet: (amount: number) => {
+    sounds.playClick();
+    set((state) => ({ walletBalance: parseFloat((state.walletBalance + amount).toFixed(2)) }));
+  },
+  paymentMethods: MOCK_PAYMENT_METHODS,
+  selectedPaymentMethod: MOCK_PAYMENT_METHODS[0],
+  selectPaymentMethod: (id: string) => {
+    sounds.playClick();
+    const pm = get().paymentMethods.find((p) => p.id === id);
+    if (pm) set({ selectedPaymentMethod: pm });
+  },
+
+  // Promo Engine
+  appliedPromo: null,
+  applyPromoCode: (code: string) => {
+    const trimmed = code.trim().toUpperCase();
+    const found = VALID_PROMOS.find((p) => p.code === trimmed);
+    if (found) {
+      sounds.playDriverMatched();
+      set({ appliedPromo: found });
+      return { success: true, message: `Promo code "${found.code}" applied! ${found.description}` };
+    }
+    return { success: false, message: 'Invalid promo code. Try NEON20, FIRST10 or GOCABS50.' };
+  },
+  removePromo: () => {
+    sounds.playClick();
+    set({ appliedPromo: null });
+  },
+
+  // Ride Scheduling
+  scheduledTime: null,
+  setScheduledTime: (time: string | null) => {
+    sounds.playClick();
+    set({ scheduledTime: time });
+  },
+
+  // Ratings, Tips & Compliments
+  tripRating: 5,
+  setTripRating: (rating: number) => {
+    sounds.playClick();
+    set({ tripRating: rating });
+  },
+  driverTip: 0,
+  setDriverTip: (tip: number) => {
+    sounds.playClick();
+    set({ driverTip: tip });
+  },
+  selectedCompliments: ['🌟 Clean Car'],
+  toggleCompliment: (comp: string) => {
+    sounds.playClick();
+    set((state) => {
+      const exists = state.selectedCompliments.includes(comp);
+      return {
+        selectedCompliments: exists
+          ? state.selectedCompliments.filter((c) => c !== comp)
+          : [...state.selectedCompliments, comp],
+      };
+    });
+  },
 
   toggleFollowCamera: () => set((state) => ({ isFollowCamera: !state.isFollowCamera })),
 
@@ -351,10 +441,19 @@ export const useTripStore = create<TripStore>((set, get) => ({
   },
 
   calculateFare: () => {
-    const { activeRoute, selectedVehicle, intermediateStop } = get();
+    const { activeRoute, selectedVehicle, intermediateStop, appliedPromo } = get();
     // Stop fee of $2.50 if an extra waypoint is added
     const stopFee = intermediateStop ? 2.5 : 0;
-    const fare = selectedVehicle.basePrice + activeRoute.distanceKm * selectedVehicle.perKm + stopFee;
+    let fare = selectedVehicle.basePrice + activeRoute.distanceKm * selectedVehicle.perKm + stopFee;
+
+    if (appliedPromo) {
+      if (appliedPromo.percentage) {
+        fare = fare * (1 - appliedPromo.percentage / 100);
+      } else if (appliedPromo.amountOff) {
+        fare = Math.max(2.5, fare - appliedPromo.amountOff);
+      }
+    }
+
     return parseFloat(fare.toFixed(2));
   },
 

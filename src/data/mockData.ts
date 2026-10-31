@@ -1,4 +1,4 @@
-import { VehicleOption, DriverProfile, PresetCityRoute } from '@/types/trip';
+import { VehicleOption, DriverProfile, PresetCityRoute, PaymentMethod, PromoDiscount } from '@/types/trip';
 
 export const VEHICLE_OPTIONS: VehicleOption[] = [
   {
@@ -285,3 +285,64 @@ export function generateRouteCoordinates(
 
   return points;
 }
+
+export const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
+  {
+    id: 'pm_wallet',
+    type: 'wallet',
+    title: 'RideFlow Wallet',
+    subtitle: 'Zero fee • Instant Kafka settlement',
+    isDefault: true,
+  },
+  {
+    id: 'pm_apple_pay',
+    type: 'apple_pay',
+    title: 'Apple Pay',
+    subtitle: 'One-touch biometric auth',
+    isDefault: false,
+  },
+  {
+    id: 'pm_visa',
+    type: 'card',
+    brand: 'Visa',
+    last4: '4242',
+    title: 'Visa Signature',
+    subtitle: 'Expires 12/28',
+    isDefault: false,
+  },
+  {
+    id: 'pm_mastercard',
+    type: 'card',
+    brand: 'Mastercard',
+    last4: '8819',
+    title: 'Mastercard World Elite',
+    subtitle: 'Expires 09/29',
+    isDefault: false,
+  },
+  {
+    id: 'pm_cash',
+    type: 'cash',
+    title: 'Cash on Arrival',
+    subtitle: 'Pay driver directly at dropoff',
+    isDefault: false,
+  },
+];
+
+export const VALID_PROMOS: PromoDiscount[] = [
+  {
+    code: 'NEON20',
+    percentage: 20,
+    description: '20% off your ride across Silicon Valley & Boston',
+  },
+  {
+    code: 'FIRST10',
+    amountOff: 10,
+    description: '$10 off your ride for new passengers',
+  },
+  {
+    code: 'GOCABS50',
+    percentage: 50,
+    description: '50% special discount on GoCabs bookings',
+  },
+];
+

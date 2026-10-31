@@ -14,6 +14,7 @@ import { DriverSimulatorModal } from '@/components/driver/DriverSimulatorModal';
 import { DriverChatModal } from '@/components/chat/DriverChatModal';
 import { SafetyToolkitModal } from '@/components/safety/SafetyToolkitModal';
 import { SavedPlacesModal } from '@/components/booking/SavedPlacesModal';
+import { PaymentMethodsModal } from '@/components/booking/PaymentMethodsModal';
 import { Bookmark } from 'lucide-react';
 import { useTripStore } from '@/store/useTripStore';
 
@@ -37,6 +38,7 @@ export default function Home() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isSafetyOpen, setIsSafetyOpen] = useState(false);
   const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const { uiTheme, mobileTab, setMobileTab } = useTripStore();
 
@@ -62,7 +64,7 @@ export default function Home() {
         /* CASE B: Umoto Dark (Image 1) & Uber Dark (Image 2) */
         <>
           {/* 1. Left Docked Sidebar */}
-          <BookingDrawer />
+          <BookingDrawer onOpenPaymentModal={() => setIsPaymentModalOpen(true)} />
 
           {/* 2. Fullscreen Right Map Canvas */}
           <div
@@ -76,6 +78,7 @@ export default function Home() {
               onToggleHUD={() => setIsHUDOpen((prev) => !prev)}
               onToggleDriverModal={() => setIsDriverModalOpen(true)}
               onOpenHistoryModal={() => setIsHistoryModalOpen(true)}
+              onOpenPaymentModal={() => setIsPaymentModalOpen(true)}
             />
 
             {/* Vector Map */}
@@ -161,7 +164,13 @@ export default function Home() {
         onClose={() => setIsSavedPlacesOpen(false)}
       />
 
-      {/* 11. Architecture & Kafka DevTools HUD */}
+      {/* 11. Payment Methods & Digital Wallet Modal */}
+      <PaymentMethodsModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+      />
+
+      {/* 12. Architecture & Kafka DevTools HUD */}
       <ArchitectureHUD isOpen={isHUDOpen} onToggle={() => setIsHUDOpen((prev) => !prev)} />
     </main>
   );
