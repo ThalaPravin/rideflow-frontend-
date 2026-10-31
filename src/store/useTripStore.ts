@@ -52,6 +52,18 @@ interface TripStore {
   driverEta: number; // in minutes
   speedKmH: number; // live simulated speedometer
 
+  // Safety & PIN Verification
+  safetyPin: string;
+
+  // In-App Messenger with Driver
+  chatMessages: ChatMessage[];
+  isDriverTyping: boolean;
+  sendChatMessage: (text: string) => void;
+
+  // Vehicle Camera Tracking
+  isFollowCamera: boolean;
+  toggleFollowCamera: () => void;
+
   // Audio FX
   isAudioMuted: boolean;
   toggleAudioMute: () => void;
@@ -92,11 +104,62 @@ export const useTripStore = create<TripStore>((set, get) => ({
   tripProgress: 0,
   driverEta: 10,
   speedKmH: 0,
+  safetyPin: '8492',
+  isFollowCamera: false,
+  isDriverTyping: false,
+  chatMessages: [
+    {
+      id: 'msg_0',
+      sender: 'driver',
+      text: 'Hi there! I am heading toward your pickup location now in the Passat.',
+      timestamp: 'Just now',
+    },
+  ],
   isAudioMuted: false,
   kafkaLogs: [],
   isBackendConnected: false,
   backendLatencyMs: 0,
   isSimulatorMode: true,
+
+  toggleFollowCamera: () => set((state) => ({ isFollowCamera: !state.isFollowCamera })),
+
+  sendChatMessage: (text: string) => {
+    sounds.playClick();
+    const riderMsg: ChatMessage = {
+      id: 'msg_' + Math.random().toString(36).substring(2, 8),
+      sender: 'rider',
+      text,
+      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+    };
+
+    set((state) => ({
+      chatMessages: [...state.chatMessages, riderMsg],
+      isDriverTyping: true,
+    }));
+
+    setTimeout(() => {
+      const driverReplies = [
+        'Got it! Pulling up right now.',
+        'Sounds good, I see you at the corner 👍',
+        'Thanks for letting me know, traffic is smooth.',
+        'On my way, hazard lights are on!',
+      ];
+      const randomReply = driverReplies[Math.floor(Math.random() * driverReplies.length)];
+
+      const driverMsg: ChatMessage = {
+        id: 'msg_' + Math.random().toString(36).substring(2, 8),
+        sender: 'driver',
+        text: randomReply,
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
+      };
+
+      sounds.playDriverMatched();
+      set((state) => ({
+        chatMessages: [...state.chatMessages, driverMsg],
+        isDriverTyping: false,
+      }));
+    }, 1800);
+  },
 
   setUITheme: (theme) => {
     sounds.playClick();

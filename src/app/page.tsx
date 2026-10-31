@@ -11,6 +11,8 @@ import { TripHistoryModal } from '@/components/booking/TripHistoryModal';
 import { ArchitectureHUD } from '@/components/hud/ArchitectureHUD';
 import { RouteSummaryCard } from '@/components/booking/RouteSummaryCard';
 import { DriverSimulatorModal } from '@/components/driver/DriverSimulatorModal';
+import { DriverChatModal } from '@/components/chat/DriverChatModal';
+import { SafetyToolkitModal } from '@/components/safety/SafetyToolkitModal';
 import { Bookmark } from 'lucide-react';
 import { useTripStore } from '@/store/useTripStore';
 
@@ -31,6 +33,8 @@ export default function Home() {
   const [isHUDOpen, setIsHUDOpen] = useState(false);
   const [isDriverModalOpen, setIsDriverModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSafetyOpen, setIsSafetyOpen] = useState(false);
 
   const { uiTheme } = useTripStore();
 
@@ -47,7 +51,10 @@ export default function Home() {
             <MapView />
           </div>
 
-          <DriverCard />
+          <DriverCard
+            onOpenChat={() => setIsChatOpen(true)}
+            onOpenSafety={() => setIsSafetyOpen(true)}
+          />
         </div>
       ) : (
         /* CASE B: Umoto Dark (Image 1) & Uber Dark (Image 2) */
@@ -81,7 +88,10 @@ export default function Home() {
             </div>
 
             {/* 3. Driver Tooltip Card floating on Map (Jeromy Conway • VW Passat • 10 min) */}
-            <DriverCard />
+            <DriverCard
+              onOpenChat={() => setIsChatOpen(true)}
+              onOpenSafety={() => setIsSafetyOpen(true)}
+            />
 
             {/* 4. Bottom Floating Route Summary Card */}
             <RouteSummaryCard />
@@ -104,7 +114,19 @@ export default function Home() {
         onClose={() => setIsDriverModalOpen(false)}
       />
 
-      {/* 8. Architecture & Kafka DevTools HUD */}
+      {/* 8. Driver In-App Chat Modal */}
+      <DriverChatModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
+
+      {/* 9. Safety Toolkit & Emergency SOS Modal */}
+      <SafetyToolkitModal
+        isOpen={isSafetyOpen}
+        onClose={() => setIsSafetyOpen(false)}
+      />
+
+      {/* 10. Architecture & Kafka DevTools HUD */}
       <ArchitectureHUD isOpen={isHUDOpen} onToggle={() => setIsHUDOpen((prev) => !prev)} />
     </main>
   );

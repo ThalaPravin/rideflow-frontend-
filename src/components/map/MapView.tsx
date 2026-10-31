@@ -1,10 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import maplibregl, { Map as MapLibreMap, Marker } from 'maplibre-gl';
-import { useTripStore } from '@/store/useTripStore';
-import { MOCK_DRIVERS } from '@/data/mockData';
-import { Layers, ZoomIn, ZoomOut } from 'lucide-react';
+import { Layers, ZoomIn, ZoomOut, Crosshair } from 'lucide-react';
 
 const CARTO_DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
 
@@ -28,6 +24,8 @@ export const MapView: React.FC = () => {
     setMapClickMode,
     handleMapClickLocation,
     uiTheme,
+    isFollowCamera,
+    toggleFollowCamera,
   } = useTripStore();
 
   // Initialize Map
@@ -321,7 +319,15 @@ export const MapView: React.FC = () => {
         wrapper.style.transform = `rotate(${carHeading}deg)`;
       }
     }
-  }, [carPosition, carHeading]);
+
+    if (isFollowCamera && map) {
+      map.easeTo({
+        center: carPosition,
+        duration: 800,
+        pitch: is3DMode ? 45 : 0,
+      });
+    }
+  }, [carPosition, carHeading, isFollowCamera, is3DMode]);
 
   // Map Camera Controls
   const toggle3D = () => {
@@ -389,6 +395,16 @@ export const MapView: React.FC = () => {
           title="Toggle 3D Perspective Pitch"
         >
           <Layers className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={toggleFollowCamera}
+          className={`w-10 h-10 rounded-2xl bg-[#13161F]/90 backdrop-blur-md border flex items-center justify-center transition-all ${
+            isFollowCamera ? 'border-[#2EE59D] text-[#2EE59D] shadow-[0_0_15px_rgba(46,229,157,0.3)]' : 'border-[#242A38] text-slate-300 hover:text-white'
+          }`}
+          title={isFollowCamera ? "Disable Driver Tracking Camera" : "Enable Follow Driver Camera"}
+        >
+          <Crosshair className="w-4 h-4" />
         </button>
 
         <button

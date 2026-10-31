@@ -68,3 +68,10 @@ export interface PresetCityRoute {
 export type MapClickTarget = 'none' | 'pickup' | 'destination' | 'stop';
 
 export type UIThemeMode = 'umoto' | 'uber' | 'gocabs';
+
+export interface ChatMessage {
+  id: string;
+  sender: 'rider' | 'driver';
+  text: string;
+  timestamp: string;
+}
