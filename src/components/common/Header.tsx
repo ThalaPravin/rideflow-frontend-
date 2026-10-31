@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PRESET_ROUTES } from '@/data/mockData';
 import { useTripStore } from '@/store/useTripStore';
-import { Activity, ShieldCheck, MapPin, Sparkles, Terminal } from 'lucide-react';
+import { Activity, MapPin, Terminal, Volume2, VolumeX } from 'lucide-react';
 
 interface HeaderProps {
   onToggleHUD: () => void;
@@ -12,7 +12,24 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggleDriverModal }) => {
-  const { activeRoute, selectPresetRoute, status } = useTripStore();
+  const {
+    activeRoute,
+    selectPresetRoute,
+    status,
+    isAudioMuted,
+    toggleAudioMute,
+    isBackendConnected,
+    backendLatencyMs,
+    checkBackendHealth,
+  } = useTripStore();
+
+  useEffect(() => {
+    checkBackendHealth();
+    const interval = setInterval(() => {
+      checkBackendHealth();
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [checkBackendHealth]);
 
   return (
     <header className="absolute top-5 left-6 right-6 z-20 flex items-center justify-between pointer-events-none">
@@ -49,19 +66,48 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggle
         </div>
       </div>
 
-      {/* Backend Status & DevTools Trigger */}
+      {/* Backend Status, Audio, & DevTools Trigger */}
       <div className="flex items-center gap-2.5 pointer-events-auto">
-        {/* Go Backend Badge */}
-        <div className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-2xl glass-panel text-xs font-mono">
+        {/* Backend Connectivity Status Badge */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl glass-panel text-xs font-mono">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-emerald opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-emerald"></span>
+            <span
+              className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                isBackendConnected ? 'bg-neon-emerald' : 'bg-neon-cyan'
+              }`}
+            />
+            <span
+              className={`relative inline-flex rounded-full h-2 w-2 ${
+                isBackendConnected ? 'bg-neon-emerald' : 'bg-neon-cyan'
+              }`}
+            />
           </span>
-          <span className="text-slate-300 font-medium">Go Microservices</span>
-          <span className="text-[10px] bg-slate-800 text-neon-cyan px-1.5 py-0.5 rounded border border-slate-700">
-            gRPC / Kafka
+          <span className="text-slate-300 font-medium">
+            {isBackendConnected ? 'Go Gateway Live' : 'Go Architecture'}
+          </span>
+          <span
+            className={`text-[10px] px-1.5 py-0.5 rounded border ${
+              isBackendConnected
+                ? 'bg-emerald-950/80 text-neon-emerald border-emerald-500/30'
+                : 'bg-slate-800 text-neon-cyan border-slate-700'
+            }`}
+          >
+            {isBackendConnected ? `${backendLatencyMs}ms` : 'Simulator Mode'}
           </span>
         </div>
+
+        {/* Audio Mute/Unmute Button */}
+        <button
+          onClick={toggleAudioMute}
+          className="w-10 h-10 rounded-2xl glass-panel flex items-center justify-center text-slate-300 hover:text-white transition"
+          title={isAudioMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+        >
+          {isAudioMuted ? (
+            <VolumeX className="w-4 h-4 text-slate-500" />
+          ) : (
+            <Volume2 className="w-4 h-4 text-neon-emerald" />
+          )}
+        </button>
 
         {/* Driver Console Button */}
         <button

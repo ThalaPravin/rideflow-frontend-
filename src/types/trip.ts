@@ -59,7 +59,10 @@ export interface PresetCityRoute {
   city: string;
   pickup: LocationPoint;
   destination: LocationPoint;
+  intermediateStop?: LocationPoint | null;
   distanceKm: number;
   durationMin: number;
   routeCoordinates: [number, number][]; // [lon, lat] for MapLibre
 }
+
+export type MapClickTarget = 'none' | 'pickup' | 'destination' | 'stop';

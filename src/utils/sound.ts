@@ -2,8 +2,15 @@
 
 class SoundEffects {
   private ctx: AudioContext | null = null;
+  public muted: boolean = false;
+
+  public toggleMute(): boolean {
+    this.muted = !this.muted;
+    return this.muted;
+  }
 
   private getContext(): AudioContext | null {
+    if (this.muted) return null;
     if (typeof window === 'undefined') return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;

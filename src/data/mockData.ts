@@ -190,3 +190,74 @@ export const PRESET_ROUTES: PresetCityRoute[] = [
     ],
   },
 ];
+
+export const POPULAR_PLACES: Record<string, { name: string; address: string; lat: number; lon: number }[]> = {
+  silicon_valley: [
+    { name: 'Palo Alto Caltrain', address: '95 University Ave, Palo Alto, CA', lat: 37.4431, lon: -122.1649 },
+    { name: 'Stanford Shopping Center', address: '660 Stanford Shopping Ctr, Palo Alto, CA', lat: 37.4445, lon: -122.1715 },
+    { name: 'Googleplex Bldg 43', address: '1600 Amphitheatre Pkwy, Mountain View, CA', lat: 37.4220, lon: -122.0841 },
+    { name: 'Apple Park Spaceship', address: '1 Apple Park Way, Cupertino, CA', lat: 37.3349, lon: -122.0090 },
+    { name: 'San Jose Airport (SJC)', address: '1701 Airport Blvd, San Jose, CA', lat: 37.3639, lon: -121.9289 },
+    { name: 'Santana Row Premier', address: '377 Santana Row, San Jose, CA', lat: 37.3216, lon: -121.9478 },
+  ],
+  boston_downtown: [
+    { name: 'Beacon Hill Historic', address: '3429 Beacon St, Boston, MA', lat: 42.3588, lon: -71.0707 },
+    { name: 'Financial District State St', address: '2374 State St, Boston, MA', lat: 42.3582, lon: -71.0538 },
+    { name: 'MIT Stata Center', address: '32 Vassar St, Cambridge, MA', lat: 42.3615, lon: -71.0906 },
+    { name: 'Harvard Yard Gate', address: 'Massachusetts Ave, Cambridge, MA', lat: 42.3736, lon: -71.1189 },
+    { name: 'Boston Logan Airport (BOS)', address: '1 Harborside Dr, Boston, MA', lat: 42.3656, lon: -71.0096 },
+  ],
+  sf_tech: [
+    { name: 'Mission Dolores Park', address: '499 Dolores St, San Francisco, CA', lat: 37.7602, lon: -122.4265 },
+    { name: 'Salesforce Tower', address: '415 Mission St, San Francisco, CA', lat: 37.7897, lon: -122.3972 },
+    { name: 'Ferry Building Market', address: '1 Ferry Building, San Francisco, CA', lat: 37.7955, lon: -122.3937 },
+    { name: 'Presidio Tunnel Tops', address: '210 Lincoln Blvd, San Francisco, CA', lat: 37.8015, lon: -122.4608 },
+    { name: 'SFO International Airport', address: 'San Francisco, CA 94128', lat: 37.6213, lon: -122.3790 },
+  ],
+};
+
+export function calculateDistanceKm(
+  p1: { lat: number; lon: number },
+  p2: { lat: number; lon: number }
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((p2.lat - p1.lat) * Math.PI) / 180;
+  const dLon = ((p2.lon - p1.lon) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((p1.lat * Math.PI) / 180) *
+      Math.cos((p2.lat * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dist = R * c;
+  return Math.max(1.2, parseFloat(dist.toFixed(1)));
+}
+
+export function generateRouteCoordinates(
+  pickup: { lat: number; lon: number },
+  destination: { lat: number; lon: number },
+  intermediateStop?: { lat: number; lon: number } | null
+): [number, number][] {
+  const points: [number, number][] = [];
+  const segments: [{ lat: number; lon: number }, { lat: number; lon: number }][] = intermediateStop
+    ? [
+        [pickup, intermediateStop],
+        [intermediateStop, destination],
+      ]
+    : [[pickup, destination]];
+
+  segments.forEach(([start, end], segIdx) => {
+    const steps = 7;
+    const startStep = segIdx === 0 ? 0 : 1;
+    for (let i = startStep; i <= steps; i++) {
+      const t = i / steps;
+      const lon = start.lon + (end.lon - start.lon) * t;
+      const lat = start.lat + (end.lat - start.lat) * t;
+      const curve = Math.sin(t * Math.PI) * 0.0025;
+      points.push([parseFloat((lon + curve * 0.8).toFixed(6)), parseFloat((lat + curve).toFixed(6))]);
+    }
+  });
+
+  return points;
+}

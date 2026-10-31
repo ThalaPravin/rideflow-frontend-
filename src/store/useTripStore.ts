@@ -6,18 +6,32 @@ import {
   TripLifecycleStatus,
   KafkaLogEntry,
   PresetCityRoute,
+  MapClickTarget,
 } from '@/types/trip';
-import { VEHICLE_OPTIONS, MOCK_DRIVERS, PRESET_ROUTES } from '@/data/mockData';
+import {
+  VEHICLE_OPTIONS,
+  MOCK_DRIVERS,
+  PRESET_ROUTES,
+  calculateDistanceKm,
+  generateRouteCoordinates,
+} from '@/data/mockData';
 import { sounds } from '@/utils/sound';
+import { api } from '@/services/api';
 
 interface TripStore {
   // Routes & Location
   activeRoute: PresetCityRoute;
   pickup: LocationPoint;
   destination: LocationPoint;
+  intermediateStop: LocationPoint | null;
+  mapClickMode: MapClickTarget;
+  setMapClickMode: (mode: MapClickTarget) => void;
   setPickup: (loc: LocationPoint) => void;
   setDestination: (loc: LocationPoint) => void;
+  setIntermediateStop: (loc: LocationPoint | null) => void;
+  removeIntermediateStop: () => void;
   selectPresetRoute: (routeId: string) => void;
+  handleMapClickLocation: (lon: number, lat: number) => void;
 
   // Vehicles & Pricing
   selectedVehicle: VehicleOption;
@@ -32,12 +46,19 @@ interface TripStore {
   carHeading: number;
   tripProgress: number; // 0 to 100%
   driverEta: number; // in minutes
+  speedKmH: number; // live simulated speedometer
+
+  // Audio FX
+  isAudioMuted: boolean;
+  toggleAudioMute: () => void;
 
   // Kafka & Architecture DevTools
   kafkaLogs: KafkaLogEntry[];
   isBackendConnected: boolean;
+  backendLatencyMs: number;
   isSimulatorMode: boolean;
   setSimulatorMode: (val: boolean) => void;
+  checkBackendHealth: () => Promise<void>;
   addKafkaLog: (log: Omit<KafkaLogEntry, 'id' | 'timestamp'>) => void;
 
   // Actions
@@ -54,6 +75,8 @@ export const useTripStore = create<TripStore>((set, get) => ({
   activeRoute: DEFAULT_ROUTE,
   pickup: DEFAULT_ROUTE.pickup,
   destination: DEFAULT_ROUTE.destination,
+  intermediateStop: null,
+  mapClickMode: 'none',
   selectedVehicle: VEHICLE_OPTIONS[0], // Passat
   status: 'IDLE',
   tripId: null,
@@ -62,12 +85,139 @@ export const useTripStore = create<TripStore>((set, get) => ({
   carHeading: 135,
   tripProgress: 0,
   driverEta: 4,
+  speedKmH: 0,
+  isAudioMuted: false,
   kafkaLogs: [],
   isBackendConnected: false,
+  backendLatencyMs: 0,
   isSimulatorMode: true,
 
-  setPickup: (loc) => set({ pickup: loc }),
-  setDestination: (loc) => set({ destination: loc }),
+  setMapClickMode: (mode) => set({ mapClickMode: mode }),
+
+  toggleAudioMute: () => {
+    const isMuted = sounds.toggleMute();
+    set({ isAudioMuted: isMuted });
+  },
+
+  checkBackendHealth: async () => {
+    const res = await api.checkHealth();
+    set({
+      isBackendConnected: res.online,
+      backendLatencyMs: res.latencyMs,
+    });
+  },
+
+  setPickup: (loc) => {
+    const { destination, intermediateStop, activeRoute } = get();
+    const newCoords = generateRouteCoordinates(loc, destination, intermediateStop);
+    const dist1 = calculateDistanceKm(loc, intermediateStop || destination);
+    const dist2 = intermediateStop ? calculateDistanceKm(intermediateStop, destination) : 0;
+    const totalDist = parseFloat((dist1 + dist2).toFixed(1));
+
+    set({
+      pickup: loc,
+      activeRoute: {
+        ...activeRoute,
+        pickup: loc,
+        distanceKm: totalDist,
+        durationMin: Math.max(4, Math.round(totalDist * 1.6)),
+        routeCoordinates: newCoords,
+      },
+      mapClickMode: 'none',
+    });
+  },
+
+  setDestination: (loc) => {
+    const { pickup, intermediateStop, activeRoute } = get();
+    const newCoords = generateRouteCoordinates(pickup, loc, intermediateStop);
+    const dist1 = calculateDistanceKm(pickup, intermediateStop || loc);
+    const dist2 = intermediateStop ? calculateDistanceKm(intermediateStop, loc) : 0;
+    const totalDist = parseFloat((dist1 + dist2).toFixed(1));
+
+    set({
+      destination: loc,
+      activeRoute: {
+        ...activeRoute,
+        destination: loc,
+        distanceKm: totalDist,
+        durationMin: Math.max(4, Math.round(totalDist * 1.6)),
+        routeCoordinates: newCoords,
+      },
+      mapClickMode: 'none',
+    });
+  },
+
+  setIntermediateStop: (loc) => {
+    const { pickup, destination, activeRoute } = get();
+    if (!loc) {
+      get().removeIntermediateStop();
+      return;
+    }
+    const newCoords = generateRouteCoordinates(pickup, destination, loc);
+    const dist1 = calculateDistanceKm(pickup, loc);
+    const dist2 = calculateDistanceKm(loc, destination);
+    const totalDist = parseFloat((dist1 + dist2).toFixed(1));
+
+    set({
+      intermediateStop: loc,
+      activeRoute: {
+        ...activeRoute,
+        intermediateStop: loc,
+        distanceKm: totalDist,
+        durationMin: Math.max(5, Math.round(totalDist * 1.7)),
+        routeCoordinates: newCoords,
+      },
+      mapClickMode: 'none',
+    });
+  },
+
+  removeIntermediateStop: () => {
+    const { pickup, destination, activeRoute } = get();
+    const newCoords = generateRouteCoordinates(pickup, destination, null);
+    const totalDist = calculateDistanceKm(pickup, destination);
+
+    set({
+      intermediateStop: null,
+      activeRoute: {
+        ...activeRoute,
+        intermediateStop: null,
+        distanceKm: totalDist,
+        durationMin: Math.max(4, Math.round(totalDist * 1.6)),
+        routeCoordinates: newCoords,
+      },
+    });
+  },
+
+  handleMapClickLocation: (lon: number, lat: number) => {
+    const { mapClickMode } = get();
+    if (mapClickMode === 'none') return;
+
+    sounds.playClick();
+    const formattedAddress = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W (Pinned)`;
+
+    if (mapClickMode === 'pickup') {
+      get().setPickup({
+        name: 'Custom Pickup Pin',
+        address: formattedAddress,
+        lat,
+        lon,
+      });
+    } else if (mapClickMode === 'destination') {
+      get().setDestination({
+        name: 'Custom Destination Pin',
+        address: formattedAddress,
+        lat,
+        lon,
+      });
+    } else if (mapClickMode === 'stop') {
+      get().setIntermediateStop({
+        name: 'Custom Intermediate Stop',
+        address: formattedAddress,
+        lat,
+        lon,
+      });
+    }
+  },
 
   selectPresetRoute: (routeId) => {
     const route = PRESET_ROUTES.find((r) => r.id === routeId) || DEFAULT_ROUTE;
@@ -75,9 +225,11 @@ export const useTripStore = create<TripStore>((set, get) => ({
       activeRoute: route,
       pickup: route.pickup,
       destination: route.destination,
-      carPosition: route.routeCoordinates[2],
+      intermediateStop: null,
+      carPosition: route.routeCoordinates[2] || route.routeCoordinates[0],
       tripProgress: 0,
       status: 'IDLE',
+      speedKmH: 0,
     });
   },
 
@@ -89,8 +241,10 @@ export const useTripStore = create<TripStore>((set, get) => ({
   },
 
   calculateFare: () => {
-    const { activeRoute, selectedVehicle } = get();
-    const fare = selectedVehicle.basePrice + activeRoute.distanceKm * selectedVehicle.perKm;
+    const { activeRoute, selectedVehicle, intermediateStop } = get();
+    // Stop fee of $2.50 if an extra waypoint is added
+    const stopFee = intermediateStop ? 2.5 : 0;
+    const fare = selectedVehicle.basePrice + activeRoute.distanceKm * selectedVehicle.perKm + stopFee;
     return parseFloat(fare.toFixed(2));
   },
 
@@ -108,9 +262,9 @@ export const useTripStore = create<TripStore>((set, get) => ({
   requestRide: () => {
     const tripId = 'trip_' + Math.random().toString(36).substring(2, 10);
     const fare = get().calculateFare();
-    const { pickup, destination, selectedVehicle, addKafkaLog } = get();
+    const { pickup, destination, intermediateStop, selectedVehicle, addKafkaLog, isBackendConnected } = get();
 
-    set({ status: 'SEARCHING', tripId, tripProgress: 0 });
+    set({ status: 'SEARCHING', tripId, tripProgress: 0, speedKmH: 0 });
 
     // Emit Kafka event: trip.requested
     addKafkaLog({
@@ -121,10 +275,24 @@ export const useTripStore = create<TripStore>((set, get) => ({
         trip_id: tripId,
         pickup: pickup.name,
         destination: destination.name,
+        intermediate_stop: intermediateStop ? intermediateStop.name : null,
         vehicle_type: selectedVehicle.name,
         amount: fare,
+        is_live_backend: isBackendConnected,
       },
     });
+
+    // If live backend is available, trigger API request
+    if (isBackendConnected) {
+      api.bookRide({
+        riderId: 'rider_usr_99182',
+        pickupLat: pickup.lat,
+        pickupLon: pickup.lon,
+        destinationLat: destination.lat,
+        destinationLon: destination.lon,
+        vehicleCategory: selectedVehicle.category,
+      });
+    }
 
     // Simulate backend Redis Geo matching search latency (~1.8s)
     setTimeout(() => {
@@ -134,6 +302,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
         status: 'ASSIGNED',
         activeDriver: assignedDriver,
         driverEta: 3,
+        speedKmH: 24,
       });
 
       // Emit Kafka event: trip.matched
@@ -169,10 +338,14 @@ export const useTripStore = create<TripStore>((set, get) => ({
             const dLat = currentPos[1] - prevPos[1];
             const heading = (Math.atan2(dLon, dLat) * 180) / Math.PI;
 
+            // Natural speed fluctuation between 38 and 54 km/h
+            const simulatedSpeed = Math.floor(38 + Math.random() * 16);
+
             set({
               carPosition: currentPos,
               carHeading: heading,
               tripProgress: Math.round((step / totalSteps) * 100),
+              speedKmH: simulatedSpeed,
             });
           } else {
             clearInterval(interval);
@@ -186,7 +359,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
   completeRide: () => {
     const { tripId, calculateFare, addKafkaLog, activeDriver } = get();
     sounds.playTripCompleted();
-    set({ status: 'COMPLETED', tripProgress: 100 });
+    set({ status: 'COMPLETED', tripProgress: 100, speedKmH: 0 });
 
     // Emit Kafka event: trip.completed
     addKafkaLog({
@@ -217,11 +390,11 @@ export const useTripStore = create<TripStore>((set, get) => ({
   },
 
   cancelRide: () => {
-    set({ status: 'IDLE', tripId: null, tripProgress: 0 });
+    set({ status: 'IDLE', tripId: null, tripProgress: 0, speedKmH: 0 });
   },
 
   resetRide: () => {
-    set({ status: 'IDLE', tripId: null, tripProgress: 0 });
+    set({ status: 'IDLE', tripId: null, tripProgress: 0, speedKmH: 0 });
   },
 
   updateDriverPosition: (pos, heading = 0) => {

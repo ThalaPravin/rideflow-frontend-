@@ -63,6 +63,13 @@ The UI takes inspiration from modern ride-hailing interfaces (**Umoto**, **Uber 
   - **Go Microservices Topology**: Health and ports for User (`:50051`), Driver (`:50052`), Trip (`:50053`), Matching (`:50054`), Payment (`:50055`), and API Gateway (`:8080`).
   - **Redis Geospatial Cache**: Visualizes `GEOSEARCH` radius queries and driver coordinate indexing.
 
+### 6. Interactive Map Pinning & Waypoint Stops
+* **Click-to-Pin on Map**: Toggle "Set custom point on Map" or click anywhere on the vector canvas to dynamically place pickup, destination, or waypoint pins.
+* **Intermediate Waypoint Stops**: Click "Add intermediate stop" to insert multiple stops along the journey with automated route re-routing and fare adjustment.
+* **Ambient Fleet Rendering**: Live nearby available cars visualized across the map representing active drivers in Redis `GEOADD` cache.
+* **Audio FX Control**: Toggle synthesized Web Audio UI chimes in the top bar.
+* **Live Microservices Healthcheck**: Automatic healthcheck pinging to Go microservices Gateway (`:8080`) with latency badge and fallback simulator.
+
 ---
 
 ## ⚡ Quickstart & Local Development
@@ -80,11 +87,11 @@ cd rideflow-frontend-
 # Install dependencies
 npm install
 
-# Start the development server
+# Start the development server (configured on port 3001 to avoid conflicts)
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** in your browser to experience the application.
+Open **[http://localhost:3001](http://localhost:3001)** in your browser to experience the application.
 
 ---
 
