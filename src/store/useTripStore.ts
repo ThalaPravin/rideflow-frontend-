@@ -8,6 +8,7 @@ import {
   PresetCityRoute,
 } from '@/types/trip';
 import { VEHICLE_OPTIONS, MOCK_DRIVERS, PRESET_ROUTES } from '@/data/mockData';
+import { sounds } from '@/utils/sound';
 
 interface TripStore {
   // Routes & Location
@@ -128,6 +129,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
     // Simulate backend Redis Geo matching search latency (~1.8s)
     setTimeout(() => {
       const assignedDriver = MOCK_DRIVERS[0]; // Jeromy Conway
+      sounds.playDriverMatched();
       set({
         status: 'ASSIGNED',
         activeDriver: assignedDriver,
@@ -183,6 +185,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
 
   completeRide: () => {
     const { tripId, calculateFare, addKafkaLog, activeDriver } = get();
+    sounds.playTripCompleted();
     set({ status: 'COMPLETED', tripProgress: 100 });
 
     // Emit Kafka event: trip.completed

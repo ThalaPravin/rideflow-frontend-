@@ -8,9 +8,10 @@ import { Activity, ShieldCheck, MapPin, Sparkles, Terminal } from 'lucide-react'
 interface HeaderProps {
   onToggleHUD: () => void;
   isHUDOpen: boolean;
+  onToggleDriverModal: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen }) => {
+export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen, onToggleDriverModal }) => {
   const { activeRoute, selectPresetRoute, status } = useTripStore();
 
   return (
@@ -61,6 +62,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleHUD, isHUDOpen }) => {
             gRPC / Kafka
           </span>
         </div>
+
+        {/* Driver Console Button */}
+        <button
+          onClick={onToggleDriverModal}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl glass-panel text-xs font-medium text-slate-300 hover:text-white hover:border-slate-500 transition"
+          title="Open live GPS telemetry and driver shift controls"
+        >
+          <Activity className="w-3.5 h-3.5 text-neon-cyan" />
+          <span className="hidden sm:inline">Driver Console</span>
+        </button>
 
         {/* DevTools HUD Toggle Button */}
         <button
